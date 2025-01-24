@@ -2,3 +2,7 @@ adc_sampler
 data.txt
 output.bin
 volts.txt
+
+!Lab*/Data-to-keep/data.txt
+!Lab*/Data-to-keep/output.bin
+!Lab*/Data-to-keep/volts.txt
