@@ -2,6 +2,8 @@ adc_sampler
 data.txt
 output.bin
 volts.txt
+plot.png
+FFT.png
 
 !Lab*/Data-to-keep/data.txt
 !Lab*/Data-to-keep/output.bin
