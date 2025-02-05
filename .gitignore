@@ -5,6 +5,4 @@ volts.txt
 plot.png
 FFT.png
 
-!Lab*/Data-to-keep/data.txt
-!Lab*/Data-to-keep/output.bin
-!Lab*/Data-to-keep/volts.txt
+!Lab*/Data-to-keep/*
