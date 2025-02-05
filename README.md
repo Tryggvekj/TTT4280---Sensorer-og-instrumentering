@@ -1,4 +1,4 @@
-Sesnor og instrumentering LAB
+Sesnor og instrumentering LAB!
 
 LAB 1:
 TODO:
