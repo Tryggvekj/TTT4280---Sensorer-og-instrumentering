@@ -76,16 +76,32 @@ def fft(output: str, adc: str) -> None:
         time_interval = float(file.readline().strip())
 
     # Read the data from volts.txt, skipping the first line
-    data = pd.read_csv(file_name, skiprows=1)
-    fft = np.fft.fft(data[adc])
-    fft = np.abs(fft)
+    if (adc == "ALL"):
+        fig, ax = plt.subplots(5, 1, figsize=(10, 15))
+        for i in range(5):
+            data = pd.read_csv(file_name, skiprows=1)
+            fft = np.fft.fft(data["ADC" + str(i + 1)])
+            fft = np.abs(fft)
 
-    t = np.linspace(0, 1 / time_interval, number_of_samples)
+            t = np.linspace(0, 1 / time_interval, number_of_samples)
 
-    plt.plot(t, fft)
-    plt.xlabel('Frequency [Hz]')
-    plt.ylabel('Magnitude')
-    plt.title('FFT of measured signal')
+            ax[i].plot(t, fft)
+            ax[i].set_xlabel('Frequency [Hz]')
+            ax[i].set_ylabel('Magnitude')
+            ax[i].set_title('FFT of measured signal for ADC' + str(i + 1))
+    else:
+        data = pd.read_csv(file_name, skiprows=1)
+        fft = np.fft.fft(data[adc])
+        fft = np.abs(fft)
+
+        t = np.linspace(0, 1 / time_interval, number_of_samples)
+
+        plt.plot(t, fft)
+        plt.xlabel('Frequency [Hz]')
+        plt.ylabel('Magnitude')
+        plt.title('FFT of measured signal')
+
+    plt.tight_layout()
     plt.savefig(output + 'FFT.png')
     plt.close()
 
@@ -98,23 +114,35 @@ def plot(output: str, adc: str):
     # Read the data from volts.txt, skipping the first line
     data = pd.read_csv(output + 'volts.txt', skiprows=1)
 
-    # Extract the data for the specified ADC
-    adc1 = data[adc]
+    # Scaling factor
+    scaling = 1000
 
     # Calculate the time axis
-    time = [i * time_interval for i in range(len(adc1))]
+    time = [i * scaling * time_interval for i in range(len(data["ADC1"]))]
 
-    # Plot every 100th data point to reduce clutter
-    plt.plot(time, adc1)
-    plt.xlabel('Time [s]')
-    plt.ylabel('Voltage [V]')
-    plt.title('Voltage Readings')
-    plt.grid(True)
-
-    # Set x-axis limits to zoom in between 0 and 0.05 seconds
-    plt.xlim(0.005, 0.01)
+    if (adc == "ALL"):
+        fig, ax = plt.subplots(5, 1, figsize=(10, 15))
+        for i in range(5):
+            ax[i].plot(time, data["ADC" + str(i + 1)])
+            ax[i].set_xlabel('Time [ms]')
+            ax[i].set_ylabel('Voltage [V]')
+            ax[i].set_title('Voltage Readings for ADC' + str(i + 1))
+            ax[i].grid(True)
+            ax[i].set_xlim(0.005*scaling, 0.01*scaling)
+            ax[i].set_ylim(-0.1, 2*1.1)
+    else:
+        # Extract the data for the specified ADC
+        adc_sel = data[adc]
+        # Plot every 100th data point to reduce clutter
+        plt.plot(time, adc_sel)
+        plt.xlabel('Time [ms]')
+        plt.ylabel('Voltage [V]')
+        plt.title('Voltage Readings')
+        plt.grid(True)
+        plt.set_xlim(0.005*scaling, 0.01*scaling)
 
     # Save the plot to a file
+    plt.tight_layout()
     plt.savefig(output + 'plot.png')
     plt.close()
 
