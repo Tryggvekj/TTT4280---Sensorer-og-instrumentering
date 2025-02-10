@@ -66,82 +66,174 @@ def convert(sample_period: str, data: str, output: str) -> None:
     write_volts(sample_period, data, output + "volts.txt")
 
 def fft(output: str, adc: str) -> None:
-    print("Taking the FFT of the measured signal...")
-
     number_of_samples = 31250
+    padding = 1000000
     file_name = output + "volts.txt"
-
-    # Read the sampling frequency from the first line
+    
     with open(file_name, 'r') as file:
         time_interval = float(file.readline().strip())
 
-    # Read the data from volts.txt, skipping the first line
-    if (adc == "ALL"):
-        fig, ax = plt.subplots(5, 1, figsize=(10, 15))
-        for i in range(5):
+    for j in range(3):
+        if j == 0:
+            print("Taking the FFT of the measured signal...")
+        elif j == 1:
+            print("Taking the FFT of the measured signal with hanning window...")
+        elif j == 2:
+            print("Taking the FFT of the measured signal with hamming window...")
+
+        if (adc == "ALL"):
+            fig, ax = plt.subplots(5, 1, figsize=(10, 15))
+            for i in range(5):
+                data = pd.read_csv(file_name, skiprows=1)
+                adc_data_org = data["ADC" + str(i + 1)]
+
+                if j == 0:
+                    adc_data = adc_data_org
+                elif j == 1:
+                    adc_data = adc_data_org * np.hanning(len(adc_data_org))
+                elif j == 2:
+                    adc_data = adc_data_org * np.hamming(len(adc_data_org))
+
+                adc_data = np.pad(adc_data, (0, padding), 'constant')
+                adc_data_org = np.pad(adc_data_org, (0, padding), 'constant')
+                fft = np.fft.fft(adc_data)
+                fft_org = np.fft.fft(adc_data_org)
+                fft = np.abs(fft)
+                fft_org = np.abs(fft_org)
+                fft_db = 20 * np.log10(fft/np.max(fft))
+                fft_db_org = 20 * np.log10(fft_org/np.max(fft_org))
+
+                t = np.linspace(0, 1 / time_interval, number_of_samples + padding)
+
+                ax[i].plot(t, fft_db_org, label="Uten vindu")
+                if j != 0:
+                    ax[i].plot(t, fft_db, label="Med Hanning-vindu" if j == 1 else "Med Hamming-vindu" if j == 2 else None)
+                ax[i].set_xlabel('Frekvens [Hz]')
+                ax[i].set_ylabel('Normalisert amplitude [dB]')
+                ax[i].set_xlim(950, 1050)
+                
+                if j == 0:
+                    ax[i].set_ylim(-90, 0)
+                elif j == 1:
+                    ax[i].set_ylim(-140, 0)
+                elif j == 2:
+                    ax[i].set_ylim(-140, 0)
+                ax[i].set_title('FFT av målt signal for ADC' + str(i + 1))
+                ax[i].legend()
+        else:
             data = pd.read_csv(file_name, skiprows=1)
-            fft = np.fft.fft(data["ADC" + str(i + 1)])
+            adc_data_org = data[adc]
+
+            if j == 0:
+                adc_data = adc_data_org
+            elif j == 1:
+                adc_data = adc_data_org * np.hanning(len(adc_data_org))
+            elif j == 2:
+                adc_data = adc_data_org * np.hamming(len(adc_data_org))
+
+            adc_data = np.pad(adc_data, (0, padding), 'constant')
+            adc_data_org = np.pad(adc_data_org, (0, padding), 'constant')
+            fft = np.fft.fft(adc_data)
+            fft_org = np.fft.fft(adc_data_org)
             fft = np.abs(fft)
+            fft_org = np.abs(fft_org)
+            fft_db = 20 * np.log10(fft / np.max(fft)) 
+            fft_db_org = 20 * np.log10(fft_org / np.max(fft_org))
+            
+            t = np.linspace(0, 1 / time_interval, number_of_samples + padding)
 
-            t = np.linspace(0, 1 / time_interval, number_of_samples)
+            plt.plot(t, fft_db_org, label="Uten vindu")
+            if j != 0:
+                plt.plot(t, fft_db, label="Med Hanning-vindu" if j == 1 else "Med Hamming-vindu" if j == 2 else None)
+            plt.xlabel('Frekvens [Hz]')
+            plt.ylabel('Normalisert amplitude [dB]')
+            plt.xlim(950, 1050)
+            if j == 0:
+                plt.ylim(-90, 0)
+            elif j == 1:
+                plt.ylim(-140, 0)
+            elif j == 2:
+                plt.ylim(-140, 0)
+            plt.title('FFT av målt signal for ' + adc)
+            plt.legend()
 
-            ax[i].plot(t, fft)
-            ax[i].set_xlabel('Frequency [Hz]')
-            ax[i].set_ylabel('Magnitude')
-            ax[i].set_title('FFT of measured signal for ADC' + str(i + 1))
-    else:
-        data = pd.read_csv(file_name, skiprows=1)
-        fft = np.fft.fft(data[adc])
-        fft = np.abs(fft)
+        plt.tight_layout()
+        if j == 0:
+            plt.savefig(output + 'FFT.png')
+        elif j == 1:
+            plt.savefig(output + 'FFT_hanning.png')
+        elif j == 2:
+            plt.savefig(output + 'FFT_hamming.png')
+    
+        plt.close()
 
-        t = np.linspace(0, 1 / time_interval, number_of_samples)
+def spectral_analysis(output: str, adc: str) -> None:
+    number_of_samples = 31250
+    padding = 1000000
+    file_name = output + "volts.txt"
 
-        plt.plot(t, fft)
-        plt.xlabel('Frequency [Hz]')
-        plt.ylabel('Magnitude')
-        plt.title('FFT of measured signal')
+    print("Performing spectral analysis of the measured signal...")
+    
+    with open(file_name, 'r') as file:
+        time_interval = float(file.readline().strip())
+
+    data = pd.read_csv(file_name, skiprows=1)
+    adc_data_org = data[adc]
+
+    adc_data = np.pad(adc_data_org, (0, padding), 'constant')
+
+    fft = np.fft.fft(adc_data)
+    fft = np.abs(fft)
+    power_spectrum = np.square(fft) 
+
+    power_spectrum_db = 20 * np.log10(power_spectrum / np.max(power_spectrum))
+
+    t = np.linspace(0, 1 / time_interval, len(fft))
+
+    plt.plot(t, power_spectrum_db)
+    plt.xlabel('Frekvens [Hz]')
+    plt.ylabel('Normalisert effekt [dB]')
+    plt.title('Effektspekter av målt signal for ' + adc)
+    plt.xlim(950, 1050)
+    plt.ylim(-190, 0)
 
     plt.tight_layout()
-    plt.savefig(output + 'FFT.png')
+    plt.savefig(output + 'Effektspekter' + '.png')
     plt.close()
 
 def plot(output: str, adc: str):
     print("Plotting the measured signal...")
-    # Read the sampling frequency from the first line
+
     with open(output + 'volts.txt', 'r') as file:
         time_interval = float(file.readline().strip())
 
-    # Read the data from volts.txt, skipping the first line
     data = pd.read_csv(output + 'volts.txt', skiprows=1)
 
-    # Scaling factor
     scaling = 1000
 
-    # Calculate the time axis
     time = [i * scaling * time_interval for i in range(len(data["ADC1"]))]
 
     if (adc == "ALL"):
         fig, ax = plt.subplots(5, 1, figsize=(10, 15))
         for i in range(5):
             ax[i].plot(time, data["ADC" + str(i + 1)])
-            ax[i].set_xlabel('Time [ms]')
-            ax[i].set_ylabel('Voltage [V]')
-            ax[i].set_title('Voltage Readings for ADC' + str(i + 1))
+            ax[i].set_xlabel('Tid [ms]')
+            ax[i].set_ylabel('Spenning [V]')
+            ax[i].set_title('Spenningsmåling for ADC' + str(i + 1))
             ax[i].grid(True)
             ax[i].set_xlim(0.005*scaling, 0.01*scaling)
             ax[i].set_ylim(-0.1, 2*1.1)
     else:
-        # Extract the data for the specified ADC
         adc_sel = data[adc]
-        # Plot every 100th data point to reduce clutter
-        plt.plot(time, adc_sel)
-        plt.xlabel('Time [ms]')
-        plt.ylabel('Voltage [V]')
-        plt.title('Voltage Readings')
-        plt.grid(True)
-        plt.set_xlim(0.005*scaling, 0.01*scaling)
 
-    # Save the plot to a file
+        plt.plot(time, adc_sel)
+        plt.xlabel('Tid [ms]')
+        plt.ylabel('Spenning [V]')
+        plt.title('Spenningsmåling for' + adc)
+        plt.grid(True)
+        plt.xlim(0.005*scaling, 0.01*scaling)
+
+
     plt.tight_layout()
     plt.savefig(output + 'plot.png')
     plt.close()
@@ -149,20 +241,19 @@ def plot(output: str, adc: str):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run ADC sampler with optional flags.")
 
-    # Arguments
+
     parser.add_argument('--compile', action='store_true', help="Compile the adc_sampler.c code.")
     parser.add_argument('--sample', action='store_true', help="Sample data.")
     parser.add_argument('--transform_data', action='store_true', help="Transform the data from output.bin to readable data.")
     parser.add_argument('--sample_and_run', action='store_true', help="Sample data and run.")
     parser.add_argument('--force', action='store_true', help="Force the script to compile and sample again if alreay compiled.")
-    parser.add_argument('--fft', type=str, default="", help="Take the FFT of the measured signal.")
-    parser.add_argument('--plot', type=str, default="", help="Plot the measured signal.")
+    parser.add_argument('--plot', type=str, default="", help="Plot ever plot fpr the measured signal.")
     parser.add_argument('--do_all', type=str, default="", help="Run all the steps.")
-    # Unneccecary arguments
+
     parser.add_argument('--channels', type=int, default=5, help="Number of channels to read from.")
     args = parser.parse_args()
 
-    data_folder = "Temporary-data/"
+    data_folder = "Data-to-keep/"
 
     if args.compile:
         compile(data_folder)
@@ -178,12 +269,11 @@ if __name__ == "__main__":
         run_sampler()
         sample_period, data = raspi_import("output.bin", channels=args.channels)
         convert(sample_period, data, data_folder)
-    
-    if args.fft:
-        fft(data_folder, args.fft)
 
     if args.plot:
         plot(data_folder, args.plot)
+        fft(data_folder, args.plot)
+        spectral_analysis(data_folder, args.plot)
 
     if args.do_all:
         if not os.path.exists("adc_sampler") or (args.force):
