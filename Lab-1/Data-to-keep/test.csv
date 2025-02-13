@@ -1,0 +1,67 @@
+#Digilent WaveForms Spectrum Analyzer
+#Device Name: ADP3450
+#Serial Number: DEMO
+#Date Time: 1970-01-01 01:00:00.000
+#Trace: Trace 1
+#Start: 0 Hz
+#Stop: 0 Hz
+#BINs: 0
+#Rate: 0 Hz
+#Samples: 0
+#Channel: C1
+#Type: Sample
+#Window: Flat Top
+#Trace: Trace 2
+#Start: 0 Hz
+#Stop: 0 Hz
+#BINs: 0
+#Rate: 0 Hz
+#Samples: 0
+#Channel: C2
+#Type: Sample
+#Window: Flat Top
+#Trace: Trace 3
+#Start: 0 Hz
+#Stop: 0 Hz
+#BINs: 0
+#Rate: 0 Hz
+#Samples: 0
+#Channel: C3
+#Type: Sample
+#Window: Flat Top
+#Trace: Trace 4
+#Start: 0 Hz
+#Stop: 0 Hz
+#BINs: 0
+#Rate: 0 Hz
+#Samples: 0
+#Channel: C4
+#Type: Sample
+#Window: Flat Top
+#Trace: Trace 5
+#Start: 0 Hz
+#Stop: 15625 Hz
+#BINs: 15626
+#Rate: 31250 Hz
+#Samples: 31250
+#Channel: Hold
+#Type: Sample
+#Window: Flat Top
+#Channel: C1
+#Range: nan V
+#Offset: nan V
+#Attenuation: 1 X
+#Channel: C2
+#Range: nan V
+#Offset: nan V
+#Attenuation: 1 X
+#Channel: C3
+#Range: nan V
+#Offset: nan V
+#Attenuation: 1 X
+#Channel: C4
+#Range: nan V
+#Offset: nan V
+#Attenuation: 1 X
+
+Frequency (Hz),Trace 1 (dBV),Phase (deg),Trace 2 (dBV),Phase (deg),Trace 3 (dBV),Phase (deg),Trace 4 (dBV),Phase (deg),Trace 5 (dBV),Phase (deg)
