@@ -6,6 +6,7 @@ import argparse
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+import scipy.signal as signal
 
 def raspi_import(path: str, channels: int =5) -> None:
     """
@@ -221,7 +222,7 @@ def plot(output: str, adc: str):
             ax[i].set_ylabel('Spenning [V]')
             ax[i].set_title('Spenningsmåling for ADC' + str(i + 1))
             ax[i].grid(True)
-            ax[i].set_xlim(0.005*scaling, 0.01*scaling)
+            # ax[i].set_xlim(0.005*scaling, 0.1*scaling)
             ax[i].set_ylim(-0.1, 2*1.1)
     else:
         adc_sel = data[adc]
@@ -238,8 +239,102 @@ def plot(output: str, adc: str):
     plt.savefig(output + 'plot.png')
     plt.close()
 
-def corr(output: str, adc: str):
+def corr(output: str):
+    number_of_samples = 31250
+    file_name = output + "volts.txt"
     
+    with open(file_name, 'r') as file:
+        time_interval = float(file.readline().strip())
+
+    data = pd.read_csv(file_name, skiprows=1)
+
+    adc2_data = data["ADC2"] - 1.65
+    adc3_data = data["ADC4"] - 1.65
+    adc4_data = data["ADC3"] - 1.65
+
+    r_21 = signal.correlate(adc3_data, adc2_data)
+    r_31 = signal.correlate(adc4_data, adc2_data)
+    r_32 = signal.correlate(adc4_data, adc3_data)
+    r_33 = signal.correlate(adc4_data, adc4_data)
+
+    delay_21 = (np.argmax(np.abs(r_21)) - len(adc2_data) + 1 )
+    delay_31 = (np.argmax(np.abs(r_31)) - len(adc2_data) + 1 )
+    delay_32 = (np.argmax(np.abs(r_32)) - len(adc3_data) + 1 )
+
+    print("n21", delay_21)
+    print("n31", delay_31)
+    print("n32", delay_32)
+
+    plt.figure()
+    plt.plot(r_21)
+    plt.title('Cross-correlation between ADC3 and ADC2')
+    plt.xlabel('Lag')
+    plt.ylabel('Correlation')
+    plt.savefig(output + 'cross_corr_21.png')
+    plt.close()
+
+    plt.figure()
+    plt.plot(r_31)
+    plt.title('Cross-correlation between ADC4 and ADC2')
+    plt.xlabel('Lag')
+    plt.ylabel('Correlation')
+    plt.savefig(output + 'cross_corr_31.png')
+    plt.close()
+
+    plt.figure()
+    plt.plot(r_32)
+    plt.title('Cross-correlation between ADC4 and ADC3')
+    plt.xlabel('Lag')
+    plt.ylabel('Correlation')
+    plt.savefig(output + 'cross_corr_32.png')
+    plt.close()
+
+    plt.figure()
+    plt.plot(r_33)
+    plt.title('Cross-correlation between ADC4 and ADC3')
+    plt.xlabel('Lag')
+    plt.ylabel('Correlation')
+    plt.savefig(output + 'cross_corr_33.png')
+    plt.close()
+    print(np.argmax(r_33))
+
+    angle = np.arctan2(np.sqrt(3)*(delay_31 + delay_21), (delay_31 - delay_21 + 2*delay_32))*(180/np.pi)
+
+    print(angle)
+
+def var_and_mean():
+    with open("Data-to-keep/angles.txt", "r") as f:
+        angles = f.readlines()
+        angles = [float(angle) for angle in angles]
+        for i in range(len(angles)):
+            if angles[i] < 0:
+                angles[i] += 360
+        mean = np.mean(angles)
+        var = np.var(angles)
+        print("Mean 1: ", mean)
+        print("Standard dev 1: ", np.sqrt(var))
+
+    with open("Data-to-keep/angles2.txt", "r") as f:
+        angles = f.readlines()
+        angles = [float(angle) for angle in angles]
+        for i in range(len(angles)):
+            if angles[i] < 0:
+                angles[i] += 360
+        mean = np.mean(angles)
+        var = np.var(angles)
+        print("Mean 2: ", mean)
+        print("Standard dev 2: ", np.sqrt(var))
+    
+    with open("Data-to-keep/angles3.txt", "r") as f:
+        angles = f.readlines()
+        angles = [float(angle) for angle in angles]
+        for i in range(len(angles)):
+            if angles[i] < 0:
+                angles[i] += 360
+        mean = np.mean(angles)
+        var = np.var(angles)
+        print("Mean 3: ", mean)
+        print("Standard dev 3: ", np.sqrt(var))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run ADC sampler with optional flags.")
@@ -252,6 +347,8 @@ if __name__ == "__main__":
     parser.add_argument('--force', action='store_true', help="Force the script to compile and sample again if alreay compiled.")
     parser.add_argument('--plot', type=str, default="", help="Plot ever plot fpr the measured signal.")
     parser.add_argument('--do_all', type=str, default="", help="Run all the steps.")
+    parser.add_argument('--angle', action='store_true', default=False, help="")
+    parser.add_argument('--lab2', action='store_true', help="")
 
     parser.add_argument('--channels', type=int, default=5, help="Number of channels to read from.")
     args = parser.parse_args()
@@ -275,8 +372,11 @@ if __name__ == "__main__":
 
     if args.plot:
         plot(data_folder, args.plot)
-        fft(data_folder, args.plot)
-        spectral_analysis(data_folder, args.plot)
+        # fft(data_folder, args.plot)
+        # spectral_analysis(data_folder, args.plot)
+
+    if args.angle:
+        corr(data_folder)
 
     if args.do_all:
         if not os.path.exists("adc_sampler") or (args.force):
@@ -289,3 +389,11 @@ if __name__ == "__main__":
         convert(sample_period, data, data_folder)
         fft(data_folder, args.do_all)
         plot(data_folder, args.do_all)
+
+    if args.lab2:
+        var_and_mean()
+        run_sampler(data_folder)
+        sample_period, data = raspi_import("output.bin", channels=args.channels)
+        convert(sample_period, data, data_folder)
+        corr(data_folder)
+        # plot(data_folder, "ALL")
