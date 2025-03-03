@@ -15,7 +15,8 @@ the need for removing the previous output file).
 
 import subprocess
 import os
-from picamera import PiCamera
+from picamera2 import Picamera2
+from picamera2.encoders import H264Encoder, Quality
 from time import sleep
 import sys
 
@@ -37,7 +38,7 @@ if extension != DEFAULT_FILE_EXTENSION:
 h264_filename = root + extension
 
 # PiCamera instance. This is an object which has several attributes that can be changed.
-camera = PiCamera()
+camera = Picamera2()
 
 # The resolution can be changed, but the frame rate has to be supported by the
 # current resolution.
@@ -76,7 +77,7 @@ camera.awb_gains = (1, 2)
 # and inspiration for other properties to adjust.
 
 # how long we want to record
-recordTime = 30
+recordTime = 20
 
 # If we were not running the Pi headless, starting the preview would show us
 # what the camera was capturing.  Now, since we run it headless, it allows the
@@ -85,10 +86,11 @@ print("Waiting for white balance to adjust")
 camera.start_preview()
 sleep(5)
 print("Start recording to " + h264_filename)
-camera.start_recording(h264_filename)
+encoder = H264Encoder()
+camera.start_recording(encoder = encoder, output = h264_filename, quality = Quality.HIGH)
 
 # Record for the amount of time we want
-camera.wait_recording(recordTime)
+sleep(recordTime)
 
 # When finished, stop recording and stop preview.
 camera.stop_recording()
