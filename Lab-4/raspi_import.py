@@ -1,12 +1,9 @@
 import numpy as np
-import sys
 import subprocess
-import time
 import argparse
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-import scipy.signal as signal
 
 def raspi_import(path: str, channels: int =5) -> None:
     """
@@ -81,8 +78,8 @@ def fft(output: str, sample_rate: int, file_names = ["volts.txt"], folder_names 
     for i in folder_names:
         for j in file_names:
             # Les I- og Q-signalene fra filen
-            I = get_adc_data("ADC1", output + i + j)
-            Q = get_adc_data("ADC5", output + i + j)
+            I = get_adc_data("ADC5", output + i + j) - 1.65
+            Q = get_adc_data("ADC1", output + i + j) - 1.65
 
             # Kombiner I- og Q-signalene til et komplekst signal
             complex_signal = I + 1j * Q
@@ -95,6 +92,11 @@ def fft(output: str, sample_rate: int, file_names = ["volts.txt"], folder_names 
             spectrum = np.fft.fftshift(spectrum)
             freqs = np.fft.fftshift(freqs)
 
+            # Finn toppfrekvensen
+            max_idx = np.argmax(np.abs(spectrum))  # Indeksen til maksimal amplitude
+            max_freq = freqs[max_idx]  # Toppfrekvensen
+            max_amplitude = 10 * np.log10(np.abs(spectrum[max_idx]) / np.max(np.abs(spectrum)))
+
             # Plot spekteret
             plt.figure(figsize=(10, 6))
             plt.plot(freqs, 10*np.log10(np.abs(spectrum)/np.max(np.abs(spectrum))))
@@ -104,6 +106,16 @@ def fft(output: str, sample_rate: int, file_names = ["volts.txt"], folder_names 
             plt.xlim(- 1 / (sample_rate * 8), 1 / (sample_rate * 8))
             plt.grid()
             plt.legend()
+
+             # Legg til en etikett for toppfrekvensen
+            plt.annotate(
+                f"Top: {max_freq:.2f} Hz",
+                xy=(max_freq, max_amplitude),
+                xytext=(max_freq, max_amplitude + 5),
+                arrowprops=dict(facecolor='red', arrowstyle="->"),
+                fontsize=10,
+                color="red"
+            )
             
             # Lagre plottet som et bilde
             plt.savefig(output + i + f"{j}_fft.png")
@@ -113,8 +125,8 @@ def plot(output: str, sample_period: int, file_names = ["volts.txt"], folder_nam
     for i in folder_names:
         for j in file_names:
             # Les I- og Q-signalene fra filen
-            I = get_adc_data("ADC1", output + i + j)
-            Q = get_adc_data("ADC5", output + i + j)
+            I = get_adc_data("ADC5", output + i + j)
+            Q = get_adc_data("ADC1", output + i + j)
 
             time = np.arange(len(I)) * sample_period
 
