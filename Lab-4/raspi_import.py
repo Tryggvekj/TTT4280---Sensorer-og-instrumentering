@@ -107,9 +107,10 @@ def fft(output: str, sample_rate: int, file_names = ["volts.txt"], folder_names 
             plt.grid()
             plt.legend()
 
-             # Legg til en etikett for toppfrekvensen
+            # Legg til en etikett for toppfrekvensen
+            c = 299792458
             plt.annotate(
-                f"Top: {max_freq:.2f} Hz",
+                f"Top: {max_freq:.2f} Hz, Speed: {c*max_freq/(2*24.13e9):.3f} m/s",
                 xy=(max_freq, max_amplitude),
                 xytext=(max_freq, max_amplitude + 5),
                 arrowprops=dict(facecolor='red', arrowstyle="->"),
