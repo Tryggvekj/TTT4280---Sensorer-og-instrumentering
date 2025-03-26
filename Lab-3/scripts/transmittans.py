@@ -4,10 +4,12 @@ import plot2 as p2
 import std_calc as sc
 
 # Load data from file
-data = np.loadtxt('C:\\Users\\trygg\\OneDrive - NTNU\\6. semester\\TTT4280 - Sensorer og instrumentering\\Lab\\Github\\Lab-3\\transmittans\\data_erik')
 #data = np.loadtxt('C:\\Users\\trygg\\OneDrive - NTNU\\6. semester\\TTT4280 - Sensorer og instrumentering\\Lab\\Github\\Lab-3\\reflektans\\data_walter')
 data = np.loadtxt('C:\\Users\\trygg\\OneDrive - NTNU\\6. semester\\TTT4280 - Sensorer og instrumentering\\Lab\\Github\\Lab-3\\robusthetstest\\data_puls_med_lys')
 #data = np.loadtxt('C:\\Users\\trygg\\OneDrive - NTNU\\6. semester\\TTT4280 - Sensorer og instrumentering\\Lab\\Github\\Lab-3\\robusthetstest\\data_puls_kms')
+data = np.loadtxt('C:\\Users\\trygg\\OneDrive - NTNU\\6. semester\\TTT4280 - Sensorer og instrumentering\\Lab\\Github\\Lab-3\\ny_data\\data')
+data = np.loadtxt('C:\\Users\\trygg\\OneDrive - NTNU\\6. semester\\TTT4280 - Sensorer og instrumentering\\Lab\\Github\\Lab-3\\transmittans\\data_erik')
+data = np.loadtxt('C:\\Users\\trygg\\OneDrive - NTNU\\6. semester\\TTT4280 - Sensorer og instrumentering\\Lab\\Github\\Lab-3\\ny_data\\data2')
 
 # Extract columns and ignore the first two seconds of data
 record_time = 60
@@ -53,7 +55,7 @@ for i, k, j in zip(r_split, g_split, b_split):
     snr_r.append(r_sn)
     snr_g.append(g_sn)
 
-    # p2.plot_rgb_and_fft(i, k, j, start_time, stop_time, fps)
+    #p2.plot_rgb_and_fft(i, k, j, start_time, stop_time, fps)
 
 std_rgb.append((np.std(pulse_r), np.mean(pulse_r)))
 std_rgb.append((np.std(pulse_g), np.mean(pulse_g)))
@@ -66,3 +68,5 @@ for i in range(5):
     print()
     print(snr_r[i], snr_g[i], snr_b[i])
 
+for i in std_rgb:
+    print(i[1]*60)

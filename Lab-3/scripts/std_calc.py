@@ -52,7 +52,7 @@ def calculate_snr(r, g, b, start_time, stop_time, fps=30):
 
 if __name__ == "__main__":
     # Example usage
-    data = np.loadtxt('C:\\Users\\trygg\\OneDrive - NTNU\\6. semester\\TTT4280 - Sensorer og instrumentering\\Lab\\Github\\Lab-3\\transmitans\\data_erik')
+    data = np.loadtxt('C:\\Users\\trygg\OneDrive - NTNU\\6. semester\\TTT4280 - Sensorer og instrumentering\\Lab\\Github\\Lab-3\\ny_data\\data')
     record_time = 60
     start_time = 2
     stop_time = 60

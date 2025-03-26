@@ -39,13 +39,17 @@ def plot_rgb_and_fft(r, g, b, start_time, stop_time, fps=30):
     plt.show()
 
     # Compute FFT for each component
-    r_fft = np.fft.fft(r)
-    g_fft = np.fft.fft(g)
-    b_fft = np.fft.fft(b)
-    freq = np.fft.fftfreq(len(r), 1/fps)
+    n_fft = 2**20  # Length of FFT
+    r_fft = np.fft.fft(r - np.mean(r), n=n_fft)
+    g_fft = np.fft.fft(g - np.mean(g), n=n_fft)
+    b_fft = np.fft.fft(b - np.mean(b), n=n_fft)
+    freq = np.fft.fftfreq(n_fft, 1/fps)  # Use n_fft for frequency axis
+
+    min = 0.01
+    max = 4
 
     # Filter FFT to show only from 0.5Hz to 4Hz
-    mask = (freq >= 0.5) & (freq <= 4)
+    mask = (freq >= min) & (freq <= max)
 
     # Create a figure for all FFT plots
     plt.figure(figsize=(12, 5))
@@ -56,7 +60,7 @@ def plot_rgb_and_fft(r, g, b, start_time, stop_time, fps=30):
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Amplitude')
     plt.title('FFT of Red Component (0.5Hz to 4Hz)')
-    plt.xlim([0.5, 4])
+    plt.xlim([min, max])
     plt.legend()
     plt.grid(True)
 
@@ -66,7 +70,7 @@ def plot_rgb_and_fft(r, g, b, start_time, stop_time, fps=30):
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Amplitude')
     plt.title('FFT of Green Component (0.5Hz to 4Hz)')
-    plt.xlim([0.5, 4])
+    plt.xlim([min, max])
     plt.legend()
     plt.grid(True)
 
@@ -76,7 +80,46 @@ def plot_rgb_and_fft(r, g, b, start_time, stop_time, fps=30):
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Amplitude')
     plt.title('FFT of Blue Component (0.5Hz to 4Hz)')
-    plt.xlim([0.5, 4])
+    plt.xlim([min, max])
+    plt.legend()
+    plt.grid(True)
+
+    plt.tight_layout()
+    plt.show()
+
+    r_spectral = np.abs(r_fft)[mask]**2
+    g_spectral = np.abs(g_fft)[mask]**2
+    b_spectral = np.abs(b_fft)[mask]**2
+
+    plt.figure(figsize=(12, 5))
+
+    # Plot spectral density for the red component
+    plt.subplot(3, 1, 1)
+    plt.plot(freq[mask], r_spectral, label='Spectral Density of Red component')
+    plt.xlabel('Frequency (Hz)')
+    plt.ylabel('Power')
+    plt.title('Spectral Density of Red Component (0.5Hz to 4Hz)')
+    plt.xlim([min, max])
+    plt.legend()
+    plt.grid(True)
+
+    # Plot spectral density for the green component
+    plt.subplot(3, 1, 2)
+    plt.plot(freq[mask], g_spectral, label='Spectral Density of Green component')
+    plt.xlabel('Frequency (Hz)')
+    plt.ylabel('Power')
+    plt.title('Spectral Density of Green Component (0.5Hz to 4Hz)')
+    plt.xlim([min, max])
+    plt.legend()
+    plt.grid(True)
+    
+    # Plot spectral density for the blue component
+    plt.subplot(3, 1, 3)
+    plt.plot(freq[mask], b_spectral, label='Spectral Density of Blue component')
+    plt.xlabel('Frequency (Hz)')
+    plt.ylabel('Power')
+    plt.title('Spectral Density of Blue Component (0.5Hz to 4Hz)')
+    plt.xlim([min, max])
     plt.legend()
     plt.grid(True)
 
