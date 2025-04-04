@@ -56,7 +56,7 @@ def save_pulse_to_latex(file_name, measurements, theoretical_pulse):
 \label{tab:%s_part%d}
 \begin{tabular}{|c|c|c|c|}
 \hline
-\textbf{Måling} & \textbf{Rød (BPM)} & \textbf{Grønn (BPM)} & \textbf{Blå (BPM)} \\ \hline
+\textbf{Måling} & \textbf{Rød [BPM]} & \textbf{Grønn [BPM]} & \textbf{Blå [BPM]} \\ \hline
 """ % (latex_safe_file_name, part, latex_safe_file_name, part,
        latex_safe_file_name, latex_safe_file_name, part + 1)
 
@@ -70,7 +70,7 @@ def save_pulse_to_latex(file_name, measurements, theoretical_pulse):
 \label{tab:%s_summary}
 \begin{tabular}{|c|c|c|c|}
 \hline
-\textbf{Kategori} & \textbf{Rød (BPM)} & \textbf{Grønn (BPM)} & \textbf{Blå (BPM)} \\ \hline
+\textbf{Kategori} & \textbf{Rød [BPM]} & \textbf{Grønn [BPM]} & \textbf{Blå [BPM]} \\ \hline
 """ % (latex_safe_file_name, latex_safe_file_name)
 
     # Beregn statistikk
