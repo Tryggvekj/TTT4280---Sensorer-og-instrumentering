@@ -1,72 +1,59 @@
 import numpy as np
 
+# Load absorption data
+muabo = np.genfromtxt("./muabo.txt", delimiter=",")  # Oxygenated blood
+muabd = np.genfromtxt("./muabd.txt", delimiter=",")  # Deoxygenated blood
 
-muabo = np.genfromtxt("C:\\Users\\trygg\\OneDrive - NTNU\\6. semester\\TTT4280 - Sensorer og instrumentering\\Lab\\Github\\Lab-3\\muabo.txt", delimiter=",")
-muabd = np.genfromtxt("C:\\Users\\trygg\\OneDrive - NTNU\\6. semester\\TTT4280 - Sensorer og instrumentering\\Lab\\Github\\Lab-3\\muabd.txt", delimiter=",")
+# Define wavelengths in nanometers
+wavelengths = np.array([600, 510, 460])  # Red, Green, Blue
 
-red_wavelength = 600 # Replace with wavelength in nanometres
-green_wavelength = 510 # Replace with wavelength in nanometres
-blue_wavelength = 460 # Replace with wavelength in nanometres
+# Helper functions to interpolate absorption values
+def mua_blood_oxy(wl):
+    return np.interp(wl, muabo[:, 0], muabo[:, 1])
 
-wavelength = np.array([red_wavelength, green_wavelength, blue_wavelength])
+def mua_blood_deoxy(wl):
+    return np.interp(wl, muabd[:, 0], muabd[:, 1])
 
-def mua_blood_oxy(x): return np.interp(x, muabo[:, 0], muabo[:, 1])
-def mua_blood_deoxy(x): return np.interp(x, muabd[:, 0], muabd[:, 1])
+# Blood properties
+bvf = 0.01       # Blood volume fraction
+oxy = 0.8        # Oxygenation level
+mua_other = 25   # Background absorption (e.g., from collagen)
 
-bvf = 0.01 # Blood volume fraction, average blood amount in tissue
-oxy = 0.8 # Blood oxygenation
+# Total absorption coefficient (μa), in 1/m
+mua_blood = mua_blood_oxy(wavelengths) * oxy + mua_blood_deoxy(wavelengths) * (1 - oxy)
+mua = mua_blood * bvf + mua_other
 
-# Absorption coefficient ($\mu_a$ in lab text)
-# Units: 1/m
-mua_other = 25 # Background absorption due to collagen, et cetera
-mua_blood = (mua_blood_oxy(wavelength)*oxy # Absorption due to
-            + mua_blood_deoxy(wavelength)*(1-oxy)) # pure blood
-mua = mua_blood*bvf + mua_other
+# Reduced scattering coefficient (μs'), in 1/m
+# Based on Bashkatov et al., 2011
+musr = 100 * (17.6 * (wavelengths / 500) ** -4 + 18.78 * (wavelengths / 500) ** -0.22)
 
-# reduced scattering coefficient ($\mu_s^\prime$ in lab text)
-# the numerical constants are thanks to N. Bashkatov, E. A. Genina and
-# V. V. Tuchin. Optical properties of skin, subcutaneous and muscle
-# tissues: A review. In: J. Innov. Opt. Health Sci., 4(1):9-38, 2011.
-# Units: 1/m
-musr = 100 * (17.6*(wavelength/500)**-4 + 18.78*(wavelength/500)**-0.22)
+# Penetration depths
+delta = np.sqrt(1 / (3 * (musr + mua) + mua))
+delta_blood = np.sqrt(1 / (3 * (musr + mua_blood) + mua_blood))
 
-# mua and musr are now available as shape (3,) arrays
-# Red, green and blue correspond to indexes 0, 1 and 2, respectively
+# Utility functions
+def print_mu_values():
+    print("μa (total absorption) =", mua)
+    print("μs' (reduced scattering) =", musr)
 
-# TODO calculate penetration depth
-delta = np.sqrt(1/(3*(musr+mua)*mua))
-deltaBlood = np.sqrt(1/(3*(musr+mua_blood)*mua_blood))
+def calculate_C():
+    C = np.sqrt(3 * mua * (musr + mua))
+    print("C =", C)
+    return C
 
-#Print values for task 11.1 b)
-def printMuValues():
-    print("Mua = ", mua)
-    print("Musr = ", musr)
+def transmission_calc():
+    C = calculate_C()
+    depth = 1.4e-2  # 1.4 cm typical vessel depth
+    transmission = np.exp(-C * depth) * 100
+    print(f"Transmission at {depth*100:.1f} mm depth: {transmission} %")
 
-#Calculate C for the different colors
-def calculateC():
-    constantC = np.sqrt(3*mua*(musr+mua))
-    print("C = ", constantC)
-    return constantC
+def contrast():
+    # Transmission values for two different blood volume fractions (example data)
+    t_low = np.array([82.6, 70.97, 60.46])  # Low BVF
+    t_high = np.array([15.2, 0.27, 0.0029]) # High BVF
 
-#Calculate transmission for each color
-def transmissionCalc():
-    constantC = calculateC()
-    depth = 300*10**(-6) #change with depth in m
-    transmission = np.exp(-constantC*depth)*100
-    print("Transmission for depth of ", depth, " gives a transmission of ", transmission)
+    contrast_values = np.abs(t_high - t_low) / t_low
+    print("Contrast :", contrast_values)
 
-def contrastCalc():
-    tLow_blood = [82.6, 70.97, 60.46]
-    tHigh = [15.2, 0.27, 0.0029]
-    contrastVector = []
-    for i in range(0, len(tLow_blood)):
-        contrastValue = (np.abs(tHigh[i]-tLow_blood[i]))/tLow_blood[i]
-        contrastVector.append(contrastValue)
-    print(contrastVector)
-
-#Skriv inn funksjon under for å kjøre
-print(delta)
-print(deltaBlood)
-print(calculateC())
-transmissionCalc()
-contrastCalc()
+# Run contrast calculation
+contrast()
