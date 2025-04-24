@@ -12,68 +12,59 @@ def bandpass_filter(data, lowcut, highcut, fs, order):
 
 def save_pulse_to_latex(file_name, measurements, theoretical_pulse):
     """
-    Lagre målt puls i en tekstfil i LaTeX-tabellformat for flere målinger.
+    Lagre målt puls i to separate LaTeX-tabellfiler: en for målinger og en for oppsummering.
 
     Parameters:
         file_name (str): Navnet på filen uten utvidelse.
         measurements (list of tuples): Liste med målinger, der hver måling er en tuple (måling_nr, r_bpm, g_bpm, b_bpm).
         theoretical_pulse (float): Teoretisk verdi for puls (BPM).
     """
-    # Opprett filnavn for tekstfilen
+    # Opprett filnavn for tekstfilene
     output_dir = "plots"
     os.makedirs(output_dir, exist_ok=True)
-    latex_file = os.path.join(output_dir, f"{file_name}_puls.tex")
+    measurements_file = os.path.join(output_dir, f"{file_name}_measurements.tex")
+    summary_file = os.path.join(output_dir, f"{file_name}_summary.tex")
 
     # Escape `_` i LaTeX
     latex_safe_file_name = file_name.replace("_", r"\_")
 
-    # Start LaTeX-tabellen
-    latex_content = r"""
+    # Lag målingstabellen
+    measurements_content = r"""
 \begin{table}[H]
 \centering
 \caption{Målt puls for fil: %s}
 \label{tab:%s}
 \begin{tabular}{|c|c|c|c|}
 \hline
-\textbf{Måling} & \textbf{Rød (BPM)} & \textbf{Grønn (BPM)} & \textbf{Blå (BPM)} \\ \hline
+\textbf{Måling} & \textbf{Rød [BPM]} & \textbf{Grønn [BPM]} & \textbf{Blå [BPM]} \\ \hline
 """ % (latex_safe_file_name, latex_safe_file_name)
 
-    # Legg til målinger i tabellen
     for i, (measurement_nr, r_bpm, g_bpm, b_bpm) in enumerate(measurements, start=1):
-        latex_content += f"{measurement_nr} & {r_bpm:.1f} & {g_bpm:.1f} & {b_bpm:.1f} \\\\ \\hline\n"
+        measurements_content += f"{measurement_nr} & {r_bpm:.1f} & {g_bpm:.1f} & {b_bpm:.1f} \\\\ \\hline\n"
 
         # Hvis vi har skrevet 5 målinger, avslutt tabellen og start en ny
         if i % 5 == 0 and i != len(measurements):
             part = i // 5
-            latex_content += r"""\end{tabular}
+            measurements_content += r"""\end{tabular}
 \caption{Målt puls for fil: %s (del %d)}
-\label{tab:%s_part%d}
+\label{tab:%s\_part%d}
 \end{table}
 
 \begin{table}[H]
 \centering
 \caption{Målt puls for fil: %s (forts.)}
-\label{tab:%s_part%d}
+\label{tab:%s\_part%d}
 \begin{tabular}{|c|c|c|c|}
 \hline
 \textbf{Måling} & \textbf{Rød [BPM]} & \textbf{Grønn [BPM]} & \textbf{Blå [BPM]} \\ \hline
 """ % (latex_safe_file_name, part, latex_safe_file_name, part,
        latex_safe_file_name, latex_safe_file_name, part + 1)
 
-    # Avslutt siste målingstabell riktig før oppsummeringen
-    latex_content += r"""\end{tabular}
+    measurements_content += r"""\end{tabular}
 \end{table}
+"""
 
-\begin{table}[H]
-\centering
-\caption{Oppsummering av pulsverdier for fil: %s}
-\label{tab:%s_summary}
-\begin{tabular}{|c|c|c|c|}
-\hline
-\textbf{Kategori} & \textbf{Rød [BPM]} & \textbf{Grønn [BPM]} & \textbf{Blå [BPM]} \\ \hline
-""" % (latex_safe_file_name, latex_safe_file_name)
-
-    # Beregn statistikk
+    # Lag oppsummeringstabellen
     r_values = [r_bpm for _, r_bpm, _, _ in measurements]
     g_values = [g_bpm for _, _, g_bpm, _ in measurements]
     b_values = [b_bpm for _, _, _, b_bpm in measurements]
@@ -90,20 +81,35 @@ def save_pulse_to_latex(file_name, measurements, theoretical_pulse):
     g_diff_mean = np.mean([abs(g - theoretical_pulse) for g in g_values])
     b_diff_mean = np.mean([abs(b - theoretical_pulse) for b in b_values])
 
-    # Legg inn rader i oppsummeringstabellen
-    latex_content += (
-        f"Teoretisk verdi & {theoretical_pulse:.1f} & {theoretical_pulse:.1f} & {theoretical_pulse:.1f} \\\\ \\hline\n"
-        f"Gjennomsnitt & {r_mean:.1f} & {g_mean:.1f} & {b_mean:.1f} \\\\ \\hline\n"
-        f"Gjennomsnittlig avvik & {r_diff_mean:.1f} & {g_diff_mean:.1f} & {b_diff_mean:.1f} \\\\ \\hline\n"
-        f"Standardavvik & {r_std:.1f} & {g_std:.1f} & {b_std:.1f} \\\\ \\hline\n"
-        r"\end{tabular}" "\n" r"\end{table}"
-    )
+    summary_content = r"""
+\begin{table}[H]
+\centering
+\caption{Oppsummering av pulsverdier for fil: %s}
+\label{tab:%s\_summary}
+\begin{tabular}{|c|c|c|c|}
+\hline
+\textbf{Kategori} & \textbf{Rød [BPM]} & \textbf{Grønn [BPM]} & \textbf{Blå [BPM]} \\ \hline
+Referansepuls & %.1f & %.1f & %.1f \\ \hline
+Gjennomsnitt & %.1f & %.1f & %.1f \\ \hline
+Gjennomsnittlig avvik & %.1f & %.1f & %.1f \\ \hline
+Standardavvik & %.1f & %.1f & %.1f \\ \hline
+\end{tabular}
+\end{table}
+""" % (latex_safe_file_name, latex_safe_file_name,
+       theoretical_pulse, theoretical_pulse, theoretical_pulse,
+       r_mean, g_mean, b_mean,
+       r_diff_mean, g_diff_mean, b_diff_mean,
+       r_std, g_std, b_std)
 
-    # Skriv til fil
-    with open(latex_file, "w", encoding="utf-8") as f:
-        f.write(latex_content)
+    # Skriv målingstabellen til fil
+    with open(measurements_file, "w", encoding="utf-8") as f:
+        f.write(measurements_content)
 
-    print(f"LaTeX-tabell lagret i: {latex_file}")
+    # Skriv oppsummeringstabellen til fil
+    with open(summary_file, "w", encoding="utf-8") as f:
+        f.write(summary_content)
+
+    print(f"LaTeX-tabeller lagret i:\n - {measurements_file}\n - {summary_file}")
 
 def find_peak_values(rs, gs, bs, fps, file_name):
     # Compute FFT for each component
@@ -251,7 +257,7 @@ def plot_rgb_and_fft(rs, gs, bs, start_time, stop_time, number, fps, file_name):
 
     # Plot FFT for the red component
     plt.subplot(3, 1, 1)
-    plt.plot(freq[mask]*scale, np.abs(r_fft)[mask])
+    plt.plot(freq[mask]*scale, np.abs(r_fft)[mask], color ='r')
     plt.axvline(r_peak_freq, color='r', linestyle='--', label=f'Målt puls: {r_bpm:.1f} BPM')
     # if scale == 60:
     #     plt.xlabel('Slag per minutt [BPM]')
@@ -265,7 +271,7 @@ def plot_rgb_and_fft(rs, gs, bs, start_time, stop_time, number, fps, file_name):
 
     # Plot FFT for the green component
     plt.subplot(3, 1, 2)
-    plt.plot(freq[mask]*scale, np.abs(g_fft)[mask])
+    plt.plot(freq[mask]*scale, np.abs(g_fft)[mask], color ='g')
     plt.axvline(g_peak_freq, color='g', linestyle='--', label=f'Målt puls: {g_bpm:.1f} BPM')
     # if scale == 60:
     #     plt.xlabel('Slag per minutt [BPM]')
@@ -279,7 +285,7 @@ def plot_rgb_and_fft(rs, gs, bs, start_time, stop_time, number, fps, file_name):
 
     # Plot FFT for the blue component
     plt.subplot(3, 1, 3)
-    plt.plot(freq[mask]*scale, np.abs(b_fft)[mask])
+    plt.plot(freq[mask]*scale, np.abs(b_fft)[mask], color ='b')
     plt.axvline(b_peak_freq, color='b', linestyle='--', label=f'Målt puls: {b_bpm:.1f} BPM')
     if scale == 60:
         plt.xlabel('Slag per minutt [BPM]')
@@ -305,7 +311,7 @@ def plot_rgb_and_fft(rs, gs, bs, start_time, stop_time, number, fps, file_name):
     log_scale = 10*np.log10(r_spectral/np.max(r_spectral))
     log_mean = np.mean(log_scale)
     plt.subplot(3, 1, 1)
-    plt.plot(freq[mask], log_scale)
+    plt.plot(freq[mask], log_scale, color='r')
     plt.axhline(log_mean, color='r', linestyle='--', label=f'Støygulv ved {log_mean:.1f} dB')
     # plt.xlabel('Frekvens [Hz]')
     # plt.ylabel('Normalisert effekt [dB]')
@@ -313,12 +319,13 @@ def plot_rgb_and_fft(rs, gs, bs, start_time, stop_time, number, fps, file_name):
     plt.xlim([min, max])
     plt.legend(loc='upper right')
     plt.grid(True)
+    print(f"{file_name}_{number}_RED-SNR:", -log_mean)
 
     # Plot spectral density for the green component
     log_scale = 10*np.log10(g_spectral/np.max(g_spectral))
     log_mean = np.mean(log_scale)
     plt.subplot(3, 1, 2)
-    plt.plot(freq[mask], log_scale)
+    plt.plot(freq[mask], log_scale, color='g')
     plt.axhline(log_mean, color='g', linestyle='--', label=f'Støygulv ved {log_mean:.1f} dB')
     # plt.xlabel('Frekvens [Hz]')
     plt.ylabel('Normalisert effekt [dB]')
@@ -326,12 +333,13 @@ def plot_rgb_and_fft(rs, gs, bs, start_time, stop_time, number, fps, file_name):
     plt.legend(loc='upper right')
     plt.xlim([min, max])
     plt.grid(True)
+    print(f"{file_name}_{number}_GREEN-SNR:", -log_mean)
     
     # Plot spectral density for the blue component
     log_scale = 10*np.log10(b_spectral/np.max(b_spectral))
     log_mean = np.mean(log_scale)
     plt.subplot(3, 1, 3)
-    plt.plot(freq[mask], log_scale)
+    plt.plot(freq[mask], log_scale, color='b')
     plt.axhline(log_mean, color='b', linestyle='--', label=f'Støygulv ved {log_mean:.1f} dB')
     plt.xlabel('Frekvens [Hz]')
     # plt.ylabel('Normalisert effekt [dB]')
@@ -339,6 +347,7 @@ def plot_rgb_and_fft(rs, gs, bs, start_time, stop_time, number, fps, file_name):
     plt.xlim([min, max])
     plt.legend(loc='upper right')
     plt.grid(True)
+    print(f"{file_name}_{number}_BLUE-SNR:", -log_mean)
 
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, f"{file_name}_spectral_{number}.png"))

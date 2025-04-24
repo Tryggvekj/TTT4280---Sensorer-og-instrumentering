@@ -15,12 +15,12 @@ file_paths = [
 ]
 
 theoretical_pulse = [
-    71,
-    72,
-    68,
-    69,
-    70,
-    71
+    67.5,
+    64.1,
+    68.6,
+    69.3,
+    67.5,
+    71.2
 ]
 
 data = np.loadtxt(file_paths[0])
