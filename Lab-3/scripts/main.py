@@ -15,12 +15,12 @@ file_paths = [
 ]
 
 theoretical_pulse = [
-    67.5,
-    64.1,
-    68.6,
-    69.3,
-    67.5,
-    71.2
+    65,
+    64,
+    68,
+    71,
+    67,
+    71
 ]
 
 data = np.loadtxt(file_paths[0])
@@ -61,7 +61,7 @@ for dat in file_paths:
         measurements.append((num, r_peak_value, g_peak_value, b_peak_value))
 
         # Plott dataene
-        p.plot_rgb_and_fft(i, k, j, start_time, stop_time, num, fps, file_name)
+        p.plot_rgb_and_fft(i, k, j, start_time, stop_time, num, fps, file_name, theoretical_pulse[counter])
         num += 1
 
     # Lagre målingene i LaTeX-tabellformat

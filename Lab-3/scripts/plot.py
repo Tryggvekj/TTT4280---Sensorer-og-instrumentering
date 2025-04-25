@@ -145,7 +145,7 @@ def find_peak_values(rs, gs, bs, fps, file_name):
     return r_bpm, g_bpm, b_bpm
 
 
-def plot_rgb_and_fft(rs, gs, bs, start_time, stop_time, number, fps, file_name):
+def plot_rgb_and_fft(rs, gs, bs, start_time, stop_time, number, fps, file_name, theoretical_pulse):
 
     min = 0.5
     max = 4
@@ -307,14 +307,26 @@ def plot_rgb_and_fft(rs, gs, bs, start_time, stop_time, number, fps, file_name):
 
     plt.figure(figsize=(12, 5))
 
-    # Plot spectral density for the red component
-    log_scale = 10*np.log10(r_spectral/np.max(r_spectral))
-    log_mean = np.mean(log_scale)
+    # Beregn log_scale for rød komponent
+    log_scale = 10 * np.log10(r_spectral / np.max(r_spectral))
+
+    # Definer sentralfrekvens og bredde for bøtten
+    center_frequency = theoretical_pulse/60  # Sentralfrekvensen
+    epsilon = 1/ ((stop_time - start_time) / 5)  # Bredden på området rundt sentralfrekvensen
+
+    # Lag en maske for å ekskludere området rundt center_frequency
+    exclude_mask = (freq[mask] < center_frequency - epsilon) | (freq[mask] > center_frequency + epsilon)
+
+    # Filtrer log_scale basert på exclude_mask
+    filtered_log_scale = log_scale[exclude_mask]
+
+    # Beregn gjennomsnittet av verdiene utenfor bøtten
+    log_mean = np.mean(filtered_log_scale)
     plt.subplot(3, 1, 1)
     plt.plot(freq[mask], log_scale, color='r')
     plt.axhline(log_mean, color='r', linestyle='--', label=f'Støygulv ved {log_mean:.1f} dB')
-    # plt.xlabel('Frekvens [Hz]')
-    # plt.ylabel('Normalisert effekt [dB]')
+    plt.axvline(center_frequency - epsilon, color='gray', linestyle='--')
+    plt.axvline(center_frequency + epsilon, color='gray', linestyle='--')
     plt.title('Effektspekter av rød komponent')
     plt.xlim([min, max])
     plt.legend(loc='upper right')
@@ -323,11 +335,16 @@ def plot_rgb_and_fft(rs, gs, bs, start_time, stop_time, number, fps, file_name):
 
     # Plot spectral density for the green component
     log_scale = 10*np.log10(g_spectral/np.max(g_spectral))
-    log_mean = np.mean(log_scale)
+    # Filtrer log_scale basert på exclude_mask
+    filtered_log_scale = log_scale[exclude_mask]
+
+    # Beregn gjennomsnittet av verdiene utenfor bøtten
+    log_mean = np.mean(filtered_log_scale)
     plt.subplot(3, 1, 2)
     plt.plot(freq[mask], log_scale, color='g')
     plt.axhline(log_mean, color='g', linestyle='--', label=f'Støygulv ved {log_mean:.1f} dB')
-    # plt.xlabel('Frekvens [Hz]')
+    plt.axvline(center_frequency - epsilon, color='gray', linestyle='--')
+    plt.axvline(center_frequency + epsilon, color='gray', linestyle='--')
     plt.ylabel('Normalisert effekt [dB]')
     plt.title('Effektspekter av grønn komponent')
     plt.legend(loc='upper right')
@@ -337,12 +354,17 @@ def plot_rgb_and_fft(rs, gs, bs, start_time, stop_time, number, fps, file_name):
     
     # Plot spectral density for the blue component
     log_scale = 10*np.log10(b_spectral/np.max(b_spectral))
-    log_mean = np.mean(log_scale)
+    # Filtrer log_scale basert på exclude_mask
+    filtered_log_scale = log_scale[exclude_mask]
+
+    # Beregn gjennomsnittet av verdiene utenfor bøtten
+    log_mean = np.mean(filtered_log_scale)
     plt.subplot(3, 1, 3)
     plt.plot(freq[mask], log_scale, color='b')
     plt.axhline(log_mean, color='b', linestyle='--', label=f'Støygulv ved {log_mean:.1f} dB')
     plt.xlabel('Frekvens [Hz]')
-    # plt.ylabel('Normalisert effekt [dB]')
+    plt.axvline(center_frequency - epsilon, color='gray', linestyle='--')
+    plt.axvline(center_frequency + epsilon, color='gray', linestyle='--')
     plt.title('Effektspekter av blå komponent')
     plt.xlim([min, max])
     plt.legend(loc='upper right')
